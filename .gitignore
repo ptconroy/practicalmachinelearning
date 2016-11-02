@@ -1,3 +1,7 @@
+# Data files#
+pml-testing.csv
+pml-training.csv
+
 # History files
 .Rhistory
 .Rapp.history
