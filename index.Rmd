@@ -61,10 +61,12 @@ stopCluster(cl)
 ```
 
 ```{r results}
-model$finalModel
+require(caret)
+vimp <- varImp(model)
+plot(vimp)
 predVal <- predict(model, validationSet)
 confusionMatrix(validationSet$class, predVal)
 predTest <- predict(model, cleanTesting)
 predTest
 ```
-Checking the model against the reserved validation data from the training set shows an accuracy of 99.5% with a Kappa of .9938. The estimated out-of-sample error rate is approximately 0.5%.
+Checking the model against the reserved validation data from the training set shows an accuracy of 99.5% with a Kappa of .9938. The estimated out-of-sample error rate is approximately 0.5%. From the importance graph, we see that the most important predictors are the roll_belt, pitch_forearm, yaw_belt, pitch_belt, and the magnet_dumbbell_z and y variables.

@@ -123,26 +123,53 @@ stopCluster(cl)
 
 
 ```r
-model$finalModel
+require(caret)
+```
+
+```
+## Loading required package: caret
+```
+
+```
+## Loading required package: lattice
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
+vimp <- varImp(model)
+```
+
+```
+## Loading required package: randomForest
+```
+
+```
+## randomForest 4.6-12
+```
+
+```
+## Type rfNews() to see new features/changes/bug fixes.
 ```
 
 ```
 ## 
-## Call:
-##  randomForest(x = x, y = y, mtry = param$mtry) 
-##                Type of random forest: classification
-##                      Number of trees: 500
-## No. of variables tried at each split: 27
-## 
-##         OOB estimate of  error rate: 0.59%
-## Confusion matrix:
-##      A    B    C    D    E  class.error
-## A 4182    1    1    0    1 0.0007168459
-## B   23 2820    4    1    0 0.0098314607
-## C    0   14 2546    7    0 0.0081807557
-## D    0    1   18 2391    2 0.0087064677
-## E    0    1    7    6 2692 0.0051736881
+## Attaching package: 'randomForest'
 ```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     margin
+```
+
+```r
+plot(vimp)
+```
+
+![](index_files/figure-html/results-1.png)<!-- -->
 
 ```r
 predVal <- predict(model, validationSet)
@@ -192,4 +219,4 @@ predTest
 ##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E
 ```
-Checking the model against the reserved validation data from the training set shows an accuracy of 99.5% with a Kappa of .9938. The estimated out-of-sample error rate is approximately 0.5%.
+Checking the model against the reserved validation data from the training set shows an accuracy of 99.5% with a Kappa of .9938. The estimated out-of-sample error rate is approximately 0.5%. From the importance graph, we see that the most important predictors are the roll_belt, pitch_forearm, yaw_belt, pitch_belt, and the magnet_dumbbell_z and y variables.
