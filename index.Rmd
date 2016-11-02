@@ -1,0 +1,70 @@
+---
+title: "HAR Project"
+author: "Patrick Conroy"
+date: "11/1/2016"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+We analyze the Weight Lifting Exercise Dataset from the Human Activity recognition project at http://groupware.les.inf.puc-rio.br/har. We attempt to generate a model that predicts the "classe" variable, which represents the quality of execution of a specified weightlifting exercise. We are given two datasets, a training and a testing set. We use the training set to train the model and estimate its accuracy. We use the testing set to respond to a quiz as part of the Coursera machine learning class.
+
+## Loading and Cleaning the Data
+
+Load required libraries and the testing and training sets.
+```{r initialize, cache=TRUE}
+library(caret)
+testing <- read.csv(file = "pml-testing.csv")
+training <- read.csv(file = "pml-training.csv")
+```
+
+We are supplied a training set that includes the "classe" variable -- the dependent variable, and a testing set where the "classe" variable is replaced with a "problem_id" for use with a quiz.
+
+To predict the accuracy of the model, we will need to split the given training data into our own training and validation data.
+
+First, we note that there are a large number of columns in the testing data that are all NAs. We therefore remove those columns in both the training and testing data. We also remove the first seven columns (X [an index], various timestamps, user id, and *_window varables), which have nothing to do with the sensor data.
+
+```{r clean, cache=TRUE}
+set.seed(314)
+seeds <- vector(mode = "list", length = 31) # tenfold validation repeated three times + 1
+for(i in 1:30) seeds[[i]] <- sample.int(1000, 3)
+seeds[[31]] <- sample.int(1000, 1) # setting up seeds for reproduceable parallel processing.
+obsCount <- colSums(!is.na(testing))
+cleanTesting <- testing[,obsCount != 0]
+cleanTraining <- training[,obsCount != 0]
+cleanTesting <- cleanTesting[,-(1:7)]
+cleanTraining <- cleanTraining[, -(1:7)]
+sum(is.na(cleanTesting))
+sum(is.na(cleanTraining)) ## No more NAs in the data.
+
+inTrain <- createDataPartition(cleanTraining$classe, p = 0.75, list = FALSE)
+trainingSet <- cleanTraining[inTrain,]
+validationSet <- cleanTraining[-inTrain,]
+```
+
+## Create the Model
+
+We will use repeated k-fold cross-validation on a random forest model. We cache this block because it takes a long time to run, even with doParallel. We use the the doParallel package with caret to speed processing on a multi-core processor.
+
+```{r model, cache=TRUE}
+library(doParallel)
+cl <- makeCluster(detectCores())
+train_control <- trainControl(method = "repeatedcv", number = 10, seeds = seeds, repeats = 3)
+registerDoParallel(cl)
+model <- train(classe ~., data = trainingSet, trControl = train_control, method = "rf")
+stopCluster(cl)
+```
+
+```{r results}
+model$finalModel
+predVal <- predict(model, validationSet)
+confusionMatrix(validationSet$class, predVal)
+predTest <- predict(model, cleanTesting)
+predTest
+```
+Checking the model against the reserved validation data from the training set shows an accuracy of 99.5% with a Kappa of .9938. The estimated out-of-sample error rate is approximately 0.5%.
